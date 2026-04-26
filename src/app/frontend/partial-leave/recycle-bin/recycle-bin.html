@@ -1,0 +1,169 @@
+<app-staff-sidebar>
+  <div class="page-wrapper">
+
+    <!-- ──────────────  PAGE HEADER  ────────────── -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <i class="bi bi-trash2-fill"></i>
+        </div>
+        <div>
+          <h1 class="page-title">Recycle Bin</h1>
+          <p class="page-subtitle">Soft-deleted records — restore or wait 90 days for auto-purge</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────────  TOAST  ────────────── -->
+    @if (toastMessage) {
+    <div class="toast-bar" [ngClass]="toastType">
+      <i class="bi" [ngClass]="toastType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'"></i>
+      {{ toastMessage }}
+    </div>
+    }
+
+    <!-- ──────────────  STAT BANNER  ────────────── -->
+    <div class="stat-row">
+      <div class="stat-chip total">
+        <i class="bi bi-archive"></i>
+        <div>
+          <span class="stat-num">{{ records.length }}</span>
+          <span class="stat-lbl">Total Deleted</span>
+        </div>
+      </div>
+      <div class="stat-chip danger">
+        <i class="bi bi-clock-fill"></i>
+        <div>
+          <span class="stat-num">{{ records.filter(r => daysLeft(r.deletedAt) <= 7).length }}</span>
+          <span class="stat-lbl">Expiring Soon (≤7 days)</span>
+        </div>
+      </div>
+      <div class="stat-chip info">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        <div>
+          <span class="stat-num">90</span>
+          <span class="stat-lbl">Days Until Auto-Purge</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────────  SEARCH  ────────────── -->
+    <div class="search-bar">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text" class="search-input" placeholder="Search by name, code, department…"
+             [(ngModel)]="searchTerm" (input)="applySearch()" id="recycle-search">
+    </div>
+
+    <!-- ──────────────  TABLE  ────────────── -->
+    <div class="table-card">
+
+      @if (loading) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading deleted records…</span>
+      </div>
+      }
+
+      @else if (filteredRecords.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-check2-circle empty-icon success"></i>
+        <h3>Recycle Bin is Empty</h3>
+        <p>No deleted records found{{ searchTerm ? ' matching your search' : '' }}.</p>
+      </div>
+      }
+
+      @else {
+      <div class="table-info-row">
+        <span>Showing <strong>{{ filteredRecords.length }}</strong> deleted record{{ filteredRecords.length !== 1 ? 's' : '' }}</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table" id="recycle-bin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Employee Name</th>
+              <th>Emp Code</th>
+              <th>Department</th>
+              <th>Leave Date</th>
+              <th>Not Work Hours</th>
+              <th>Deleted At</th>
+              <th>Auto-Delete In</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of filteredRecords; track row._id; let i = $index) {
+            <tr class="table-row" [class.expiring]="daysLeft(row.deletedAt) <= 7">
+              <td class="td-no">{{ i + 1 }}</td>
+              <td>
+                <div class="emp-name">
+                  <div class="emp-avatar">{{ (row.name || '?').charAt(0).toUpperCase() }}</div>
+                  <div>
+                    <span class="name-text">{{ row.name }}</span>
+                    @if (row.deletedBy) {
+                    <span class="deleted-by">Deleted by: {{ row.deletedBy }}</span>
+                    }
+                  </div>
+                </div>
+              </td>
+              <td><span class="code-badge">{{ row.empCode }}</span></td>
+              <td><span class="dept-badge">{{ row.department }}</span></td>
+              <td class="date-cell">{{ formatDate(row.date) }}</td>
+              <td>
+                <span class="hours-chip">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ formatHours(row.totalMinutes) }}
+                </span>
+              </td>
+              <td class="date-cell small-date">{{ formatDateTime(row.deletedAt) }}</td>
+              <td>
+                <span class="days-chip" [ngClass]="getDaysLeftClass(daysLeft(row.deletedAt))">
+                  <i class="bi bi-hourglass-split me-1"></i>
+                  {{ daysLeft(row.deletedAt) }} day{{ daysLeft(row.deletedAt) !== 1 ? 's' : '' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-restore" (click)="openRestoreConfirm(row)" [id]="'restore-' + row._id">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Restore
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+
+    </div><!-- /table-card -->
+
+  </div><!-- /page-wrapper -->
+
+  <!-- ──────────────  RESTORE CONFIRM MODAL  ────────────── -->
+  <div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4 shadow-lg">
+        <div class="modal-body p-4 text-center">
+          <div class="modal-icon restore">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </div>
+          <h5 class="modal-title-text">Restore Record?</h5>
+          @if (restoreTarget) {
+          <p class="modal-desc">
+            Restore <strong>{{ restoreTarget.name }}</strong>'s leave on
+            <strong>{{ formatDate(restoreTarget.date) }}</strong>?
+            <br>It will appear in reports again.
+          </p>
+          }
+          <div class="modal-actions">
+            <button class="btn-cancel" data-bs-dismiss="modal" id="btn-restore-cancel">Cancel</button>
+            <button class="btn-confirm-restore" (click)="confirmRestore()" id="btn-restore-confirm">
+              <i class="bi bi-arrow-counterclockwise me-2"></i>Yes, Restore
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</app-staff-sidebar>

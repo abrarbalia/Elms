@@ -1,0 +1,227 @@
+/* ══════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM: PROFESSIONAL ADMIN REQUESTS THEME
+   Palette: Indigo / Slate / Sage
+   ══════════════════════════════════════════════════════════════════ */
+
+:host {
+    display: block;
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --primary-soft: #eef2ff;
+    --success: #10b981;
+    --success-soft: #ecfdf5;
+    --danger: #ef4444;
+    --danger-soft: #fef2f2;
+    --warning: #f59e0b;
+    --warning-soft: #fffbeb;
+    --info: #06b6d4;
+    --info-soft: #ecfeff;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-500: #64748b;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+}
+
+.admin-requests-container {
+    background-color: var(--slate-50);
+    min-height: 100vh;
+}
+
+/* ── Typography ── */
+.admin-title {
+    color: var(--slate-900);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    font-size: 1.875rem;
+}
+
+.admin-sub {
+    color: var(--slate-500);
+    font-weight: 500;
+}
+
+/* ── Stat Cards ── */
+.metric-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+.metric-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+/* ── Panel Header ── */
+.panel-header {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+/* ── Entry Form Card ── */
+.entry-card {
+    background: white;
+    border-radius: 1.25rem;
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.entry-card-header {
+    background: var(--slate-900);
+    color: white;
+    padding: 1.25rem 1.5rem;
+}
+
+.entry-card-body {
+    padding: 2rem;
+}
+
+.form-floating > .form-control, 
+.form-floating > .form-select {
+    border: 1px solid var(--slate-200);
+    border-radius: 0.75rem;
+    font-weight: 500;
+    color: var(--slate-800);
+}
+
+.form-floating > .form-control:focus,
+.form-floating > .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* ── Table Styling ── */
+.table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.table thead th {
+    background-color: var(--slate-50);
+    color: var(--slate-700);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid var(--slate-200);
+}
+
+.table tbody td {
+    padding: 1rem;
+    color: var(--slate-700);
+    font-weight: 500;
+}
+
+.table tbody tr:hover {
+    background-color: var(--slate-50);
+}
+
+/* ── Avatars ── */
+.faculty-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ── Badges ── */
+.cat-pill {
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.cat-late { background: var(--warning-soft); color: var(--warning); border: 1px solid #fde68a; }
+.cat-early { background: var(--info-soft); color: var(--info); border: 1px solid #a5f3fc; }
+.cat-inbetween { background: var(--slate-100); color: var(--slate-700); border: 1px solid var(--slate-200); }
+
+/* ── Editable Inputs ── */
+.inline-time-input {
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+    color: var(--slate-900);
+    transition: all 0.2s;
+    width: 90px;
+}
+
+.inline-time-input:hover, 
+.inline-time-input:focus {
+    background: white;
+    border-color: var(--slate-300);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* ── Actions ── */
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--slate-200);
+    background: white;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-approve:hover { color: var(--success); border-color: var(--success); background: var(--success-soft); }
+.btn-reject:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+.btn-delete:hover { color: var(--slate-900); border-color: var(--slate-900); background: var(--slate-100); }
+
+/* ── Animations ── */
+.btn-new-request {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-new-request:active {
+    transform: scale(0.95);
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

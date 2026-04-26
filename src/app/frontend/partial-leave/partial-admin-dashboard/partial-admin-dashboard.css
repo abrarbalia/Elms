@@ -1,0 +1,163 @@
+/* ── DASHBOARD SYSTEM ── */
+.dashboard-container {
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.dash-title {
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+}
+
+.dash-sub {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+/* ── STAT CARDS ── */
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: transform 0.2s;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+}
+
+.stat-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.icon-primary { background: #eef2ff; color: #4f46e5; }
+.icon-info { background: #ecfeff; color: #0891b2; }
+.icon-success { background: #f0fdf4; color: #16a34a; }
+.icon-warning { background: #fffbeb; color: #d97706; }
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+}
+
+/* ── PANEL CARDS ── */
+.panel-card {
+    background: white;
+    border-radius: 1.5rem;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: white;
+}
+
+/* ── ACTION CARDS ── */
+.action-card {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-card:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: scale(1.02);
+}
+
+.action-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* ── PILLS ── */
+.status-pill {
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.sp-approved { background: #f0fdf4; color: #16a34a; }
+.sp-pending { background: #fffbeb; color: #d97706; }
+.sp-rejected { background: #fef2f2; color: #dc2626; }
+
+.type-pill {
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.tp-late { background: #eef2ff; color: #4f46e5; }
+.tp-early { background: #ecfeff; color: #0891b2; }
+.tp-inbetween { background: #f1f5f9; color: #64748b; }
+
+/* ── AVATARS ── */
+.avatar-sx {
+    width: 2.25rem;
+    height: 2.25rem;
+    background: #6366f1;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.x-small { font-size: 0.75rem; }
+.bg-indigo-soft { background: #eef2ff; }
+.text-indigo { color: #4f46e5; }
+.bg-cyan-soft { background: #ecfeff; }
+.text-cyan { color: #0891b2; }
+
+/* ── TABLE OVERRIDES ── */
+.table th {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #64748b;
+    padding: 1rem;
+    border-top: none;
+}
+
+.table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}

@@ -1,0 +1,373 @@
+<div class="leave-admin-bg">
+  <!-- ══════════════════════════════════ STAT CARDS ══════════════════════════════════ -->
+  <div class="container-fluid px-4 pt-4">
+    <div class="admin-header mb-4">
+      <div>
+        <h2 class="admin-title">Partial Leave Control Center</h2>
+        <p class="admin-sub">Manage, approve & track all employee leave requests</p>
+      </div>
+      <button class="btn btn-export" (click)="exportCSV()">
+        <i class="bi bi-download me-2"></i> Export CSV
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-total">
+          <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
+          <div class="stat-value">{{ leaves.length }}</div>
+          <div class="stat-label">Total Requests</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-pending">
+          <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+          <div class="stat-value">{{ countByStatus('Pending') }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-approved">
+          <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+          <div class="stat-value">{{ countByStatus('Approved') }}</div>
+          <div class="stat-label">Approved</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-rejected">
+          <div class="stat-icon"><i class="bi bi-x-circle"></i></div>
+          <div class="stat-value">{{ countByStatus('Rejected') }}</div>
+          <div class="stat-label">Rejected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════ FILTER & SEARCH BAR ══════════════════════════════════ -->
+    <div class="filter-bar card mb-4 p-3">
+      <div class="row g-2 align-items-center">
+
+        <!-- Search -->
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control" placeholder="Search by Name or EmpCode"
+            [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()">
+        </div>
+
+        <!-- Type Filter -->
+        <div class="col-6 col-md-2">
+          <select class="form-select" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
+            <option value="">All Types</option>
+            <!-- <option value="Late">Late</option>
+            <option value="Early">Early</option>
+            <option value="Inbetween">Inbetween</option> -->
+            <option *ngFor="let lt of leaveTypes" [value]="lt">{{ lt }}</option>
+          </select>
+        </div>
+
+        <!-- ✅ Department Filter — populated from API via departments[] -->
+        <div class="col-6 col-md-2">
+          <select class="form-select" [(ngModel)]="filterDepartment" (ngModelChange)="onFilterChange()">
+            <option value="">All Departments</option>
+            <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-6 col-md-2">
+          <select class="form-select" [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+
+        <!-- Date From -->
+        <div class="col-6 col-md-2">
+          <input type="date" class="form-control" placeholder="From Date"
+            [(ngModel)]="filterDateFrom" (ngModelChange)="onFilterChange()">
+        </div>
+
+        <!-- Date To -->
+        <div class="col-6 col-md-2">
+          <input type="date" class="form-control" placeholder="To Date"
+            [(ngModel)]="filterDateTo" (ngModelChange)="onFilterChange()">
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mt-2">
+          <button class="btn btn-light border btn-sm px-3 fw-semibold text-dark shadow-sm rounded-pill"
+            (click)="downloadSelectedPDF()">
+            <i class="bi bi-file-earmark-pdf text-danger me-1"></i> Selection PDF
+          </button>
+
+          <button class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm rounded-pill"
+            (click)="downloadDepartmentReport()"
+            [disabled]="!filterDepartment">
+            <i class="bi bi-file-earmark-arrow-down me-1"></i> Dept Report
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════ TABLE ══════════════════════════════════ -->
+    <div class="card table-card mb-4">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0 leave-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">
+                  <input type="checkbox" class="form-check-input"
+                    [checked]="isAllSelected()" (change)="toggleSelectAll($event)">
+                </th>
+                <th>srNo</th>
+                <th style="cursor: pointer;" (click)="sort('empCode')">
+                  EmpCode <i class="bi" [ngClass]="sortIcon('empCode')"></i>
+                </th>
+                <th class="sortable" (click)="sort('name')">
+                  Name <i class="bi" [ngClass]="sortIcon('name')"></i>
+                </th>
+                <th class="sortable" (click)="sort('department')">
+                  Department <i class="bi" [ngClass]="sortIcon('department')"></i>
+                </th>
+                <th class="sortable" (click)="sort('date')">
+                  Date <i class="bi" [ngClass]="sortIcon('date')"></i>
+                </th>
+                <th>Type</th>
+                <th class="sortable" (click)="sort('totalMinutes')">
+                  Minutes <i class="bi" [ngClass]="sortIcon('totalMinutes')"></i>
+                </th>
+                <th>Hours</th>
+                <th class="sortable" (click)="sort('status')">
+                  Status <i class="bi" [ngClass]="sortIcon('status')"></i>
+                </th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let leave of pagedLeaves" class="leave-row"
+                [class.row-selected]="selectedIds.has(leave._id)">
+
+                <!-- Checkbox -->
+                <td>
+                  <input type="checkbox" class="form-check-input"
+                    [checked]="selectedIds.has(leave._id)"
+                    (change)="toggleSelect(leave._id)">
+                </td>
+
+                <td>{{ leave.srNo }}</td>
+                <td class="fw-semibold text-primary">{{ leave.empCode }}</td>
+
+                <!-- Employee with avatar -->
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="emp-avatar">{{ leave.name | slice:0:1 }}</div>
+                    <span>{{ leave.name }}</span>
+                  </div>
+                </td>
+
+                <td>{{ leave.department }}</td>
+                <td class="text-muted small">{{ leave.date | date:'mediumDate' }}</td>
+
+                <!-- Type Badge -->
+                <td>
+                  <span class="type-badge"
+                    [ngClass]="{
+                      'type-late': leave.type === 'Late',
+                      'type-early': leave.type === 'Early',
+                      'type-inbetween': leave.type === 'Inbetween'
+                    }">
+                    {{ leave.type }}
+                  </span>
+                </td>
+
+                <td>{{ leave.totalMinutes }} min</td>
+                <td>{{ getHours(leave.totalMinutes) }}</td>
+
+                <!-- Status Badge -->
+                <td>
+                  <span class="status-badge"
+                    [ngClass]="{
+                      'status-approved': leave.status === 'Approved',
+                      'status-pending': leave.status === 'Pending',
+                      'status-rejected': leave.status === 'Rejected'
+                    }">
+                    <span class="status-dot"></span> {{ leave.status }}
+                  </span>
+                </td>
+
+                <!-- ✅ FIX: Pass `leave` (the row item) to openEdit, not selectedLeave -->
+                <td>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <button class="btn btn-primary" (click)="viewDetail(leave)" title="View Details">
+                      <i class="bi bi-eye-fill"></i>
+                    </button>
+                    <button class="btn btn-warning" (click)="openEdit(leave)" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </td>
+
+              </tr>
+
+              <!-- Empty State -->
+              <tr *ngIf="filteredLeaves.length === 0">
+                <td colspan="11" class="text-center py-5">
+                  <div class="empty-state">
+                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                    <p class="mt-2 text-muted">No leave requests found.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════ PAGINATION ══════════════════════════════════ -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-5"
+      *ngIf="filteredLeaves.length > 0">
+      <div class="text-muted small">
+        Showing {{ pageStart }}–{{ pageEnd }} of {{ filteredLeaves.length }} records
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <select class="form-select form-select-sm w-auto"
+          [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+          <option [value]="5">5 / page</option>
+          <option [value]="10">10 / page</option>
+          <option [value]="25">25 / page</option>
+          <option [value]="50">50 / page</option>
+        </select>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="goToPage(currentPage - 1)">‹</a>
+            </li>
+            <li class="page-item" *ngFor="let p of pageNumbers" [class.active]="p === currentPage">
+              <a class="page-link" (click)="goToPage(p)">{{ p }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="goToPage(currentPage + 1)">›</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <!-- ══════════════════════════════════ DETAIL MODAL ══════════════════════════════════ -->
+  <div class="modal fade" id="leaveDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content detail-modal" *ngIf="selectedLeave">
+        <div class="modal-header border-0 pb-0">
+          <div class="d-flex align-items-center gap-3">
+            <div class="emp-avatar emp-avatar-lg">{{ selectedLeave.name | slice:0:1 }}</div>
+            <div>
+              <h5 class="mb-0 fw-bold">{{ selectedLeave.name }}</h5>
+              <small class="text-muted">{{ selectedLeave.empCode }}</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Date</span>
+              <span class="detail-value">{{ selectedLeave.date | date:'fullDate' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Leave Type</span>
+              <span class="detail-value">
+                <span class="type-badge"
+                  [ngClass]="{
+                    'type-late': selectedLeave.type === 'Late',
+                    'type-early': selectedLeave.type === 'Early',
+                    'type-inbetween': selectedLeave.type === 'Inbetween'
+                  }">{{ selectedLeave.type }}</span>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Duration</span>
+              <span class="detail-value">{{ selectedLeave.totalMinutes }} min / {{ selectedLeave.totalHours }} hr</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Current Status</span>
+              <span class="detail-value">
+                <span class="status-badge"
+                  [ngClass]="{
+                    'status-approved': selectedLeave.status === 'Approved',
+                    'status-pending': selectedLeave.status === 'Pending',
+                    'status-rejected': selectedLeave.status === 'Rejected'
+                  }">
+                  <span class="status-dot"></span>{{ selectedLeave.status }}
+                </span>
+              </span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Total Not Worked</span>
+            <span class="detail-value">{{ getNotWorkedTime(selectedLeave.empCode) }}</span>
+          </div>
+        </div>
+        <div class="modal-footer border-0 gap-2">
+          <button class="btn btn-success flex-fill" (click)="approve(selectedLeave._id); closeModal()">
+            <i class="bi bi-check-circle-fill me-1"></i> Approve
+          </button>
+          <button class="btn btn-danger flex-fill" (click)="reject(selectedLeave._id); closeModal()">
+            <i class="bi bi-x-circle-fill me-1"></i> Reject
+          </button>
+          <!-- <button class="btn btn-dark" (click)="downloadFullUserReport(selectedLeave.empCode, selectedLeave.name)">
+            <i class="bi bi-file-earmark-pdf"></i> Full Report
+          </button> -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════ EDIT MODAL ══════════════════════════════════ -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Edit Leave</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label>Type</label>
+          <select [(ngModel)]="editLeave.type" class="form-control mb-2">
+            <option>Late</option>
+            <option>Early</option>
+            <option>Inbetween</option>
+          </select>
+
+          <label>Date</label>
+          <input type="date" [(ngModel)]="editLeave.date" class="form-control mb-2">
+
+          <label>Time In</label>
+          <input type="time" [(ngModel)]="editLeave.timeIn" class="form-control mb-2">
+
+          <label>Time Out</label>
+          <input type="time" [(ngModel)]="editLeave.timeOut" class="form-control mb-2">
+
+          <label>Status</label>
+          <select [(ngModel)]="editLeave.status" class="form-control mb-2">
+            <option>Pending</option>
+            <option>Approved</option>
+            <option>Rejected</option>
+          </select>
+
+          <label>Reason</label>
+          <textarea [(ngModel)]="editLeave.reason" class="form-control"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-success" (click)="saveEdit()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

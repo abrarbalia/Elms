@@ -1,0 +1,176 @@
+<div class="d-flex flex-column min-vh-100 bg-light">
+  <!-- Top Navbar with Glassmorphism -->
+  <nav class="navbar navbar-expand-lg navbar-light border-bottom px-4 px-md-5 py-3 sticky-top z-3"
+    style="background: rgba(255, 255, 255, 0.9) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;">
+    <div class="container-fluid p-0">
+      <div class="d-flex align-items-center mb-0">
+        <button
+          class="btn btn-primary bg-gradient border-0 me-3 rounded-circle shadow-sm text-white d-flex align-items-center justify-content-center toggle-btn-hover"
+          style="width: 42px; height: 42px; transition: all 0.3s;" (click)="toggleSidebar()">
+          <i class="bi" [ngClass]="isCollapsed ? 'bi-list fs-5' : 'bi-justify-left fs-5'"></i>
+        </button>
+        <span class="navbar-brand fw-bolder mb-0 d-flex align-items-center text-primary" style="letter-spacing: 0.5px;">
+          <div class="bg-primary text-white rounded d-flex align-items-center justify-content-center me-2 shadow-sm"
+            style="width: 36px; height: 36px;">
+            <i class="bi bi-cpu-fill fs-5"></i>
+          </div>
+          <span class="d-none d-sm-inline fs-4">ELMS <span class="text-dark fw-bold">ADMIN</span></span>
+        </span>
+      </div>
+
+      <div class="dropdown">
+        <button
+          class="btn btn-white border border-2 d-flex align-items-center rounded-pill px-3 py-1 shadow-sm dropdown-toggle profile-btn-hover"
+          type="button" data-bs-toggle="dropdown" style="transition: all 0.3s;">
+          <div class="text-white rounded-circle d-flex align-items-center justify-content-center me-2 fw-bold shadow-sm"
+            style="width: 34px; height: 34px; font-size: 0.9rem; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+            AD
+          </div>
+          <span class="fw-bold text-dark d-none d-md-inline small">Administrator</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 py-2 rounded-3" style="min-width: 200px;">
+          <li>
+            <h6 class="dropdown-header text-uppercase small fw-bold" style="color: #1e3c72; letter-spacing: 1px;">System
+              Manager</h6>
+          </li>
+          <li>
+            <hr class="dropdown-divider opacity-25">
+          </li>
+          <li>
+            <button
+              class="dropdown-item text-primary fw-semibold d-flex align-items-center py-2 px-3 dropdown-item-hover"
+              routerLink="/partial-profile-update">
+              <div
+                class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3 d-flex align-items-center justify-content-center">
+                <i class="bi bi-person-gear"></i>
+              </div>
+              Profile Update
+            </button>
+          </li>
+          <li>
+            <button
+              class="dropdown-item text-danger fw-semibold d-flex align-items-center py-2 px-3 dropdown-item-hover"
+              (click)="logout()">
+              <div
+                class="bg-danger bg-opacity-10 text-danger rounded p-2 me-3 d-flex align-items-center justify-content-center">
+                <i class="bi bi-power"></i>
+              </div>
+              Sign Out
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="d-flex flex-grow-1 overflow-hidden">
+    <!-- Premium Sidebar -->
+    <div class="text-white shadow-sm flex-shrink-0" [ngClass]="isCollapsed ? 'd-none d-md-block' : 'd-block'"
+      [style.width]="isCollapsed ? '85px' : '280px'"
+      style="background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+
+      <div class="d-flex flex-column p-3 h-100">
+
+        <div class="d-flex align-items-center mb-4 mt-2" [class.justify-content-center]="isCollapsed">
+          <div
+            class="bg-white bg-opacity-10 rounded-3 p-2 border border-white border-opacity-25 d-flex align-items-center justify-content-center shadow-sm">
+            <i class="bi bi-shield-lock fs-5"></i>
+          </div>
+          <span class="fs-6 fw-bold ms-3 text-uppercase text-white" [class.d-none]="isCollapsed"
+            style="letter-spacing: 1px;">Control Panel</span>
+        </div>
+
+        <hr class="text-white opacity-25 mb-4 mt-0">
+
+        <ul class="nav nav-pills flex-column mb-auto gap-2 px-2">
+
+          <li class="nav-item">
+            <a routerLink="/partial-admin-dashboard"
+              routerLinkActive="bg-white text-primary shadow fw-bold border-start border-4 border-primary opacity-100 ps-4"
+              class="nav-link text-white d-flex align-items-center py-3 rounded-3 border-0 opacity-75 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <i class="bi bi-grid-1x2-fill fs-5" [ngClass]="{'me-3': !isCollapsed}"></i>
+              <span *ngIf="!isCollapsed" class="fw-medium">Dashboard</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a routerLink="/admin-managed-staff"
+              routerLinkActive="bg-white text-primary shadow fw-bold border-start border-4 border-primary opacity-100 ps-4"
+              class="nav-link text-white d-flex align-items-center py-3 rounded-3 border-0 opacity-75 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <i class="bi bi-people-fill fs-5" [ngClass]="{'me-3': !isCollapsed}"></i>
+              <span *ngIf="!isCollapsed" class="fw-medium">Staff Portal</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a routerLink="/admin-leave"
+              routerLinkActive="bg-white text-primary shadow fw-bold border-start border-4 border-primary opacity-100 ps-4"
+              class="nav-link text-white d-flex align-items-center py-3 rounded-3 border-0 opacity-75 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <i class="bi bi-chat-left-dots-fill fs-5" [ngClass]="{'me-3': !isCollapsed}"></i>
+              <span *ngIf="!isCollapsed" class="fw-medium">Leave Requests</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a routerLink="/admin-leave-application"
+              routerLinkActive="bg-white text-primary shadow fw-bold border-start border-4 border-primary opacity-100 ps-4"
+              class="nav-link text-white d-flex align-items-center py-3 rounded-3 border-0 opacity-75 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <i class="bi bi-calendar-plus-fill fs-5" [ngClass]="{'me-3': !isCollapsed}"></i>
+              <span *ngIf="!isCollapsed" class="fw-medium">Apply Leave</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a routerLink="/admin-report"
+              routerLinkActive="bg-white text-primary shadow fw-bold border-start border-4 border-primary opacity-100 ps-4"
+              class="nav-link text-white d-flex align-items-center py-3 rounded-3 border-0 opacity-75 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <i class="bi bi-file-earmark-bar-graph-fill fs-5" [ngClass]="{'me-3': !isCollapsed}"></i>
+              <span *ngIf="!isCollapsed" class="fw-medium">Analytics & Reports</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a routerLink="/admin-leave-type"
+              routerLinkActive="bg-white text-primary shadow fw-bold border-start border-4 border-primary opacity-100 ps-4"
+              class="nav-link text-white d-flex align-items-center py-3 rounded-3 border-0 opacity-75 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <i class="bi bi-gear-fill fs-5" [ngClass]="{'me-3': !isCollapsed}"></i>
+              <span *ngIf="!isCollapsed" class="fw-medium">System Settings</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a (click)="viewOfflineQueue()" style="cursor: pointer;"
+              class="nav-link text-white d-flex align-items-center justify-content-between py-3 rounded-end-3 border-0 opacity-100 side-link-hover"
+              [ngClass]="isCollapsed ? 'justify-content-center px-0' : 'px-3'">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-cloud-arrow-up-fill fs-5 text-warning"></i>
+                <span [class.d-none]="isCollapsed" class="ms-3 fw-bold text-warning">Sync Queue</span>
+              </div>
+              <span [class.d-none]="isCollapsed" class="badge bg-warning text-dark rounded-pill fs-6 px-2 shadow-sm">{{ offlineCount() }}</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <button (click)="logout()"
+            class="btn btn-link text-white text-decoration-none w-100 d-flex align-items-center py-2 px-0 fw-semibold opacity-75 side-btn-hover"
+            [ngClass]="isCollapsed ? 'justify-content-center' : 'justify-content-start px-3'">
+            <i class="bi bi-box-arrow-left fs-5 text-warning" [class.me-3]="!isCollapsed"></i>
+            <span [class.d-none]="isCollapsed">Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-grow-1 overflow-auto bg-light w-100 p-0">
+      <ng-content></ng-content>
+    </div>
+
+  </div>
+</div>

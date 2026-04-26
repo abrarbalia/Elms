@@ -1,0 +1,233 @@
+<app-staff-sidebar>
+  <div class="container-fluid py-4 px-lg-5 bg-light min-vh-100">
+
+    <!-- 🔷 Hero Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div
+          class="p-4 text-white shadow-sm rounded-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center status-hero-card">
+          <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-clock-history me-2"></i>My Leave Status</h2>
+            <!-- <p class="mb-0 opacity-75 fs-5">Tracking Applications for: <strong>{{ userName() }}</strong></p> -->
+          </div>
+          <div class="mt-3 mt-md-0 text-end d-none d-md-block">
+            <span class="badge bg-white text-primary rounded-pill px-3 py-2 shadow-sm"><i
+                class="bi bi-calendar-check me-1"></i> Real-time Updates</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="department-admin-bg">
+      <div class="container-fluid px-4 pt-4">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="fw-bold">Department Management</h2>
+            <p class="text-muted mb-0">Manage all departments</p>
+          </div>
+
+          <button class="btn btn-success" (click)="exportCSV()">
+            <i class="bi bi-download me-2"></i> Export CSV
+          </button>
+        </div>
+
+        <!-- SEARCH + ADD -->
+        <div class="card p-3 mb-4 shadow-sm">
+          <div class="row g-2">
+
+            <div class="col-md-4">
+              <input type="text" class="form-control" placeholder="Search department..." [(ngModel)]="searchTerm" />
+            </div>
+
+            <div class="col-md-8 text-end">
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#departmentModal"
+                (click)="openAdd()">
+                <i class="bi bi-plus-circle me-1"></i> Add Department
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card shadow-sm">
+          <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+              <thead class="table-light">
+                <tr>
+                  <th (click)="sort('srNo')" style="cursor:pointer">#</th>
+                  <th (click)="sort('name')" style="cursor:pointer">Department</th>
+                  <th (click)="sort('dept_code')" style="cursor:pointer">Code</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th class="text-center">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                <tr *ngFor="let d of paged">
+
+                  <td>{{ d.srNo }}</td>
+                  <td class="fw-bold">{{ d.name }}</td>
+                  <td class="fw-bold text-muted">{{ d.dept_code }}</td>
+                  <td>
+                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                      {{ d.startTime }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">
+                      {{ d.endTime }}
+                    </span>
+                  </td>
+
+                  <td class="text-center">
+
+                    <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal"
+                      data-bs-target="#departmentModal" (click)="openEdit(d)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                      (click)="openDelete(d)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+
+                  </td>
+                </tr>
+
+                <!-- EMPTY -->
+                <tr *ngIf="filtered.length === 0">
+                  <td colspan="6" class="text-center py-4 text-muted">
+                    No departments found
+                  </td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="d-flex justify-content-between mt-3" *ngIf="filtered.length > 0">
+
+          <div>
+            Page {{ currentPage }} of {{ totalPages }}
+          </div>
+
+          <div>
+
+            <button class="btn btn-sm btn-outline-secondary me-1" (click)="goToPage(currentPage - 1)">
+              Prev
+            </button>
+
+            <button *ngFor="let p of pages" class="btn btn-sm me-1" [class.btn-primary]="p === currentPage"
+              (click)="goToPage(p)">
+              {{ p }}
+            </button>
+
+            <button class="btn btn-sm btn-outline-secondary" (click)="goToPage(currentPage + 1)">
+              Next
+            </button>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ADD / EDIT MODAL -->
+      <div class="modal fade" id="departmentModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5>
+                {{ modalMode === 'add' ? 'Add Department' : 'Edit Department' }}
+              </h5>
+              <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form [formGroup]="form" (ngSubmit)="submitForm()">
+
+              <div class="modal-body">
+
+                <div class="mb-3">
+                  <label>Name</label>
+                  <input class="form-control" formControlName="name" />
+                </div>
+
+                <div class="mb-3">
+                  <label>Department Code</label>
+                  <input type="number" class="form-control" formControlName="dept_code" />
+                </div>
+
+                <div class="mb-3">
+                  <label>Start Time</label>
+                  <input type="time" class="form-control" formControlName="startTime" />
+                </div>
+
+                <div class="mb-3">
+                  <label>End Time</label>
+                  <input type="time" class="form-control" formControlName="endTime" />
+                </div>
+
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+
+                <button class="btn btn-primary" type="submit">
+                  {{ modalMode === 'add' ? 'Add' : 'Update' }}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE MODAL -->
+      <div class="modal fade" id="deleteModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5>Confirm Delete</h5>
+              <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+              Delete <strong>{{ selectedItem?.name }}</strong> ?
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- TOAST -->
+      <div *ngIf="toastMsg" class="position-fixed bottom-0 end-0 m-3">
+        <div class="alert" [class.alert-success]="toastType === 'success'"
+          [class.alert-danger]="toastType === 'danger'">
+          {{ toastMsg }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</app-staff-sidebar>

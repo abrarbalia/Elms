@@ -1,0 +1,183 @@
+<app-staff-sidebar>
+  <div class="container py-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <div class="card shadow-sm border-0 mb-3 overflow-hidden rounded-4">
+          <div class="card-body p-0">
+            <div class="d-flex align-items-center bg-primary text-white p-4 gap-3">
+
+              <!-- Avatar -->
+              <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center
+                          justify-content-center flex-shrink-0" style="width:60px; height:60px;">
+                <i class="bi bi-person-check-fill fs-3"></i>
+              </div>
+
+              <!-- Name · Role · EmpCode -->
+              <div class="overflow-hidden">
+
+                <!-- MongoDB User.role -->
+                <h6 class="mb-1 text-white-50">
+                  Portal: {{ users?.role || 'Staff' }} Application
+                </h6>
+
+                <!-- MongoDB User.name — from localStorage -->
+                <h4 class="fw-bold mb-0 text-truncate" *ngIf="!staffLoading && !staffError">
+                  {{ users?.name }}
+                </h4>
+                <h4 class="fw-bold mb-0 opacity-50 d-flex align-items-center gap-2" *ngIf="staffLoading">
+                  <span class="spinner-border spinner-border-sm"></span> Loading…
+                </h4>
+                <h4 class="fw-bold mb-0 text-warning" *ngIf="staffError">
+                  <i class="bi bi-exclamation-circle me-1"></i> Failed to load
+                </h4>
+
+                <!-- MongoDB User.empCode -->
+                <span class="badge bg-white bg-opacity-25 text-white mt-1 fw-normal"
+                  style="font-size:.72rem; border-radius:50rem;">
+                  {{ users?.empCode || '—' }}
+                </span>
+
+              </div>
+
+              <!-- Dynamic Totals from Leave collection -->
+
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             FORM CARD
+        ══════════════════════════════════ -->
+        <div class="card shadow-sm border-0 rounded-4 p-4 bg-white">
+
+          <!-- Section Header -->
+          <div class="d-flex align-items-center mb-4">
+            <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+              <i class="bi bi-file-earmark-plus text-primary fs-4"></i>
+            </div>
+            <div>
+              <h3 class="text-dark fw-bold mb-0 fs-4">Apply for Leave</h3>
+              <small class="text-muted">Fill in the details and submit your request</small>
+            </div>
+          </div>
+
+          <form (ngSubmit)="submitLeave()" #leaveForm="ngForm">
+            <div class="row g-3">
+
+              <!-- Date -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                  Date
+                </label>
+                <input type="date" class="form-control bg-light border-0 py-2 shadow-none" [(ngModel)]="leave.date"
+                  name="date" required>
+              </div>
+
+              <!-- Leave Type -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-muted text-uppercase mb-2">
+                  Leave Type
+                </label>
+                <div class="d-flex gap-2 flex-wrap">
+                  <label *ngFor="let type of leaveTypes"
+                    class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 border" style="cursor:pointer;"
+                    [style.background]="leave.type === type.name ? '#eff6ff' : '#f8fafc'">
+
+                    <input type="radio" name="type" [(ngModel)]="leave.type" [value]="type.name"
+                      (change)="onTypeChange()" required>
+
+                    <span>{{ type.name }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Time In — Late -->
+              <div class="col-12" *ngIf="leave.type === 'Late'">
+                <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                  Time In
+                  <span class="fw-normal text-muted ms-1">(Actual arrival time)</span>
+                </label>
+                <input type="time" class="form-control bg-light border-0 py-2 shadow-none" [(ngModel)]="leave.timeIn"
+                  name="timeIn" (change)="onTimeChange()">
+              </div>
+
+              <!-- Time Out — Early -->
+              <div class="col-12" *ngIf="leave.type === 'Early'">
+                <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                  Time Out
+                  <span class="fw-normal text-muted ms-1">(Early departure time)</span>
+                </label>
+                <input type="time" class="form-control bg-light border-0 py-2 shadow-none" [(ngModel)]="leave.timeOut"
+                  name="timeOut" (change)="onTimeChange()">
+              </div>
+
+              <!-- Time In + Out — Inbetween -->
+              <div class="col-12" *ngIf="leave.type === 'Inbetween'">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                      Time Out (Going)
+                    </label>
+                    <input type="time" class="form-control bg-light border-0 py-2 shadow-none"
+                      [(ngModel)]="leave.timeIn" name="timeIn" (change)="onTimeChange()">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                      Time In (Coming Back)
+                    </label>
+                    <input type="time" class="form-control bg-light border-0 py-2 shadow-none"
+                      [(ngModel)]="leave.timeOut" name="timeOut" (change)="onTimeChange()">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reason -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                  Reason
+                </label>
+                <textarea class="form-control bg-light border-0 py-2 shadow-none" rows="3" [(ngModel)]="leave.reason"
+                  name="reason" required placeholder="Briefly describe the reason for your leave…">
+                </textarea>
+              </div>
+
+              <!-- Live Preview -->
+              <div class="col-12" *ngIf="leave.type">
+                <div class="bg-primary bg-opacity-10 border border-primary
+                            border-opacity-25 rounded-3 px-3 py-2
+                            d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    <small class="text-primary fw-semibold">
+                      <b>{{ leave.type }}</b>
+                      <span *ngIf="leave.date">
+                        &nbsp;·&nbsp; {{ leave.date | date:'mediumDate' }}
+                      </span>
+                    </small>
+                  </div>
+                  <div class="text-primary fw-bold">
+                    <i class="bi bi-clock-history me-1"></i> {{ calculatedHours }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold shadow-sm"
+                  [disabled]="leaveForm.invalid">
+                  <i class="bi bi-check2-circle me-2"></i>
+                  Confirm and Submit Request
+                </button>
+              </div>
+
+            </div>
+          </form>
+
+        </div><!-- /form card -->
+
+      </div>
+    </div>
+  </div>
+</app-staff-sidebar>

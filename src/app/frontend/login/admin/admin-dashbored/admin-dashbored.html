@@ -1,0 +1,206 @@
+<app-admin-sidebar>
+  <div class="main-content flex-grow-1 w-100 dash-bg d-flex flex-column h-100 p-4 p-md-5 overflow-auto">
+    
+    <!-- Header -->
+    <div class="dash-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div>
+        <h2 class="fw-bold text-dark mb-1 d-flex align-items-center">
+          <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+            <i class="bi bi-shield-lock-fill text-primary"></i>
+          </div>
+          Admin Command Center
+        </h2>
+        <p class="text-secondary mb-0">System overview tracking live daily absences and recent applications.</p>
+      </div>
+      <div>
+        <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm fw-bold" (click)="fetchDashboardData()">
+          <i class="bi bi-arrow-clockwise me-2"></i> Refresh Feed
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading) {
+      <div class="d-flex justify-content-center align-items-center flex-grow-1">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    } @else {
+      
+      <!-- Metrics Row -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="glass-card stat-card p-4 rounded-4 shadow-sm border-0 d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3 me-3 stat-icon-glow">
+              <i class="bi bi-people-fill fs-4"></i>
+            </div>
+            <div>
+              <p class="text-muted text-uppercase fw-bold ls-1 mb-1 small">Total Absent Today</p>
+              <h3 class="fw-black mb-0 text-dark">{{ stats.total }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="glass-card stat-card p-4 rounded-4 shadow-sm border-0 d-flex align-items-center">
+            <div class="bg-success bg-opacity-10 text-success rounded-circle p-3 me-3 stat-icon-glow">
+              <i class="bi bi-check-circle-fill fs-4"></i>
+            </div>
+            <div>
+              <p class="text-muted text-uppercase fw-bold ls-1 mb-1 small">Approved Today</p>
+              <h3 class="fw-black mb-0 text-success">{{ stats.approved }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="glass-card stat-card p-4 rounded-4 shadow-sm border-0 d-flex align-items-center">
+            <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-3 me-3 stat-icon-glow">
+              <i class="bi bi-hourglass-split fs-4"></i>
+            </div>
+            <div>
+              <p class="text-muted text-uppercase fw-bold ls-1 mb-1 small">Pending Approvals</p>
+              <h3 class="fw-black mb-0 text-warning">{{ stats.pending }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 d-flex flex-column gap-2">
+           <div class="glass-card p-2 px-3 rounded-4 shadow-sm border-0 d-flex justify-content-between align-items-center flex-grow-1">
+              <span class="text-muted fw-semibold small">Full-Day Absences</span>
+              <span class="badge bg-secondary rounded-pill px-3 py-2">{{ stats.full }}</span>
+           </div>
+           <div class="glass-card p-2 px-3 rounded-4 shadow-sm border-0 d-flex justify-content-between align-items-center flex-grow-1 border-start border-4 border-info">
+              <span class="text-muted fw-semibold small">Partial Absences</span>
+              <span class="badge bg-info rounded-pill px-3 py-2 text-dark">{{ stats.partial }}</span>
+           </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="row g-4 mb-5">
+        <div class="col-lg-7">
+          <div class="glass-card p-4 h-100 rounded-4 shadow-sm border-0 chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="fw-bold text-dark text-uppercase ls-1 mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i> Absences by Department (Today)</h6>
+            </div>
+            <div class="position-relative" style="height: 300px;">
+              <canvas #deptChartCanvas></canvas>
+              @if (activeLeaves.length === 0) {
+                 <div class="position-absolute top-50 start-50 translate-middle text-muted fw-bold">
+                   No absences to display
+                 </div>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="glass-card p-4 h-100 rounded-4 shadow-sm border-0 chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="fw-bold text-dark text-uppercase ls-1 mb-0"><i class="bi bi-pie-chart-fill me-2 text-primary"></i> Leave Type Distribution</h6>
+            </div>
+            <div class="position-relative" style="height: 300px;">
+              <canvas #typeChartCanvas></canvas>
+              @if (activeLeaves.length === 0) {
+                 <div class="position-absolute top-50 start-50 translate-middle text-muted fw-bold">
+                   No absences to display
+                 </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Split (Today's Absences | 5 Recent Applications) -->
+      <div class="row g-4">
+         <!-- Live Today's Roster -->
+         <div class="col-xl-7">
+            <div class="glass-card p-4 rounded-4 shadow-sm border-0 h-100">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                 <h5 class="fw-bold text-dark mb-0"><i class="bi bi-calendar2-day-fill me-2 text-primary"></i> Actually Absent Today</h5>
+                 <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill shadow-sm fw-bold">
+                   {{ activeLeaves.length }} Total Away
+                 </span>
+              </div>
+              <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table align-middle table-hover premium-table mb-0">
+                  <thead class="table-light text-uppercase small fw-bold text-secondary sticky-top z-1">
+                    <tr>
+                      <th class="ps-4 rounded-start-3 border-0">Employee</th>
+                      <th class="border-0">Dept</th>
+                      <th class="border-0">Leave Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (leave of activeLeaves; track leave.id) {
+                      <tr class="bg-white">
+                        <td class="ps-4 fw-bold text-dark py-3">
+                          <div class="d-flex align-items-center">
+                             <div class="avatar-circle me-3">{{ leave.name.charAt(0) }}</div>
+                             <div>
+                               <div class="text-dark">{{ leave.name }}</div>
+                               <div class="small fw-normal text-muted">ID: {{ leave.empCode }}</div>
+                             </div>
+                          </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border px-2 py-1">{{ leave.department }}</span></td>
+                        <td>
+                          <span class="badge px-3 py-2 rounded-pill shadow-sm" [ngClass]="leave.category === 'Partial' ? 'bg-info bg-opacity-10 text-dark border border-info' : 'bg-primary bg-opacity-10 text-primary border border-primary'">
+                            {{ leave.type }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                    @if (activeLeaves.length === 0) {
+                      <tr>
+                        <td colspan="3" class="text-center py-5">
+                          <div class="text-muted fw-semibold">No faculty or staff are absent today.</div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+         </div>
+
+         <!-- 5 Most Recent Leave Applications Feed -->
+         <div class="col-xl-5">
+            <div class="glass-card p-4 rounded-4 shadow-sm border-0 h-100 filter-card">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                 <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-warning"></i> Recent Feed</h5>
+                 <span class="badge bg-dark bg-opacity-10 text-dark px-3 py-2 rounded-pill shadow-sm border">
+                   Latest 5 Applications
+                 </span>
+              </div>
+              <div class="list-group list-group-flush list-recent">
+                 @for (recent of recentLeaves; track recent.id) {
+                    <div class="list-group-item bg-transparent px-0 py-3 border-bottom border-light-subtle d-flex align-items-center">
+                       <div class="avatar-circle-sm me-3" [style.background]="recent.category === 'Partial' ? 'linear-gradient(135deg, #17a2b8, #0dcaf0)' : 'linear-gradient(135deg, #6c757d, #adb5bd)'">
+                         {{ recent.name.charAt(0) }}
+                       </div>
+                       <div class="flex-grow-1 min-w-0">
+                          <div class="d-flex justify-content-between align-items-center">
+                             <span class="fw-bold text-dark text-truncate d-block">{{ recent.name }}</span>
+                             <span class="badge rounded-pill fw-bold" style="font-size: 0.65rem;" [ngClass]="{
+                                'bg-success': isApproved(recent.status),
+                                'bg-warning text-dark': recent.status.toLowerCase() === 'pending',
+                                'bg-danger': isRejected(recent.status)
+                             }">{{ recent.status }}</span>
+                          </div>
+                          <div class="d-flex align-items-center mt-1">
+                             <span class="small text-muted me-2 border-end pe-2"><i class="bi bi-tag-fill me-1"></i>{{ recent.rawType }}</span>
+                             <span class="small text-muted fw-semibold"><i class="bi bi-calendar2-day me-1"></i> For: {{ recent.displayDate | date:'MMM dd' }}</span>
+                          </div>
+                       </div>
+                    </div>
+                 }
+                 @if (recentLeaves.length === 0) {
+                    <div class="text-center py-5 text-muted fw-semibold">No recent leave history available.</div>
+                 }
+              </div>
+            </div>
+         </div>
+      </div>
+      
+    }
+  </div>
+</app-admin-sidebar>

@@ -1,0 +1,160 @@
+<app-staff-sidebar>
+  <div class="page-wrapper">
+
+    <!-- ──────────────  PAGE HEADER  ────────────── -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <i class="bi bi-bar-chart-line-fill"></i>
+        </div>
+        <div>
+          <h1 class="page-title">Consolidated Details</h1>
+          <p class="page-subtitle">Aggregated not-work hours per employee</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────────  SUMMARY BANNER  ────────────── -->
+    @if (hasSearched) {
+    <div class="summary-banner">
+      <div class="summary-icon">
+        <i class="bi bi-clock-history"></i>
+      </div>
+      <div class="summary-text">
+        <span class="summary-label">Total Not Work Hours from {{ filterDateFrom ? (filterDateFrom | date:'dd MMM yyyy') : 'All time' }} to {{ filterDateTo ? (filterDateTo | date:'dd MMM yyyy') : 'Today' }} = </span>
+      </div>
+      <div class="summary-value">{{ grandTotalHours }}</div>
+    </div>
+    }
+
+    <!-- ──────────────  FILTER CARD  ────────────── -->
+    <div class="filter-card">
+      <div class="filter-grid">
+
+        <div class="filter-group">
+          <label class="filter-label"><i class="bi bi-person me-1"></i> Employee Name</label>
+          <input type="text" class="filter-input" placeholder="Search name…"
+                 [(ngModel)]="filterName" (input)="onFilterChange()" id="filter-name">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label"><i class="bi bi-hash me-1"></i> Employee Code</label>
+          <input type="text" class="filter-input" placeholder="e.g. 1001"
+                 [(ngModel)]="filterEmpCode" (input)="onFilterChange()" id="filter-empcode">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label"><i class="bi bi-building me-1"></i> Department</label>
+          <select class="filter-input" [(ngModel)]="filterDepartment" (change)="onFilterChange()" id="filter-dept">
+            <option value="">All Departments</option>
+            @for (dept of departments; track dept) {
+              <option [value]="dept">{{ dept }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label"><i class="bi bi-calendar-event me-1"></i> From Date</label>
+          <input type="date" class="filter-input" [(ngModel)]="filterDateFrom"
+                 (change)="onFilterChange()" id="filter-from">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label"><i class="bi bi-calendar-check me-1"></i> To Date</label>
+          <input type="date" class="filter-input" [(ngModel)]="filterDateTo"
+                 (change)="onFilterChange()" id="filter-to">
+        </div>
+
+        <div class="filter-group filter-actions">
+          <button class="btn-apply" (click)="fetchReport()" id="btn-apply-filter">
+            <i class="bi bi-funnel-fill me-2"></i>Apply
+          </button>
+          <button class="btn-clear" (click)="clearFilters()" id="btn-clear-filter">
+            <i class="bi bi-x-circle me-2"></i>Clear
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ──────────────  TABLE  ────────────── -->
+    <div class="table-card">
+
+      @if (loading) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading data…</span>
+      </div>
+      }
+
+      @else if (records.length === 0 && hasSearched) {
+      <div class="empty-state">
+        <i class="bi bi-inbox empty-icon"></i>
+        <h3>No Records Found</h3>
+        <p>Try adjusting your filters or date range.</p>
+      </div>
+      }
+
+      @else if (records.length > 0) {
+      <div class="table-header-row">
+        <span class="record-count">{{ records.length }} employee{{ records.length !== 1 ? 's' : '' }} found</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table" id="consolidated-table">
+          <thead>
+            <tr>
+              <th class="th-no">#</th>
+              <th class="sortable" (click)="sort('name')" id="th-name">
+                Employee Name <i class="bi {{ sortIcon('name') }}"></i>
+              </th>
+              <th class="sortable" (click)="sort('empCode')" id="th-empcode">
+                Emp Code <i class="bi {{ sortIcon('empCode') }}"></i>
+              </th>
+              <th class="sortable" (click)="sort('department')" id="th-dept">
+                Department <i class="bi {{ sortIcon('department') }}"></i>
+              </th>
+              <th class="sortable text-end" (click)="sort('totalNotWorkMinutes')" id="th-hours">
+                Total Not Work Hours <i class="bi {{ sortIcon('totalNotWorkMinutes') }}"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of records; track row.empCode; let i = $index) {
+            <tr class="table-row">
+              <td class="td-no">{{ i + 1 }}</td>
+              <td>
+                <div class="emp-name">
+                  <div class="emp-avatar">{{ (row.name || '?').charAt(0).toUpperCase() }}</div>
+                  <span>{{ row.name }}</span>
+                </div>
+              </td>
+              <td><span class="code-badge">{{ row.empCode }}</span></td>
+              <td><span class="dept-badge">{{ row.department }}</span></td>
+              <td class="text-end">
+                <span class="hours-chip">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ formatHours(row.totalNotWorkMinutes) }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="footer-row">
+              <td colspan="4" class="footer-label">
+                <i class="bi bi-sigma me-2"></i>Grand Total
+              </td>
+              <td class="text-end">
+                <span class="grand-total-chip">{{ grandTotalHours }}</span>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      }
+
+    </div><!-- /table-card -->
+
+  </div><!-- /page-wrapper -->
+</app-staff-sidebar>

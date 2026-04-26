@@ -1,0 +1,251 @@
+<app-staff-sidebar>
+    <div class="admin-requests-container p-0">
+        
+        <!-- Toast Notification -->
+        <div *ngIf="toastMessage" class="container-fluid px-4" style="position:sticky;top:0;z-index:1050;">
+            <div class="alert mb-0 py-2 px-4 d-flex align-items-center gap-2 border-0 rounded-3 shadow"
+                [ngClass]="{
+                    'alert-success': toastType === 'success',
+                    'alert-danger': toastType === 'danger',
+                    'alert-warning': toastType === 'warning'
+                }"
+                style="animation: slideIn 0.3s ease;">
+                <i class="bi"
+                    [ngClass]="{
+                        'bi-check-circle-fill': toastType === 'success',
+                        'bi-exclamation-circle-fill': toastType === 'danger',
+                        'bi-exclamation-triangle-fill': toastType === 'warning'
+                    }"></i>
+                <span class="fw-semibold" style="white-space: pre-line;">{{ toastMessage }}</span>
+            </div>
+        </div>
+        <!-- ══════════════════════════════════ HEADER SECTION ══════════════════════════════════ -->
+        <div class="container-fluid px-4 pt-4 mb-4">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <h2 class="admin-title mb-1">Administrative Request Control</h2>
+                    <p class="admin-sub mb-0">Oversee, validate, and architect departmental attendance exceptions</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <button class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm btn-new-request d-inline-flex align-items-center fw-bold"
+                            (click)="toggleForm()">
+                        <i class="bi" [ngClass]="showForm ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
+                        <span class="ms-2">{{ showForm ? 'Retract Panel' : 'Architect New Request' }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid px-4">
+            
+            <!-- ══════════════════════════════════ METRIC SUMMARY ══════════════════════════════════ -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="metric-card d-flex align-items-center gap-3">
+                        <div class="metric-icon"><i class="bi bi-inboxes-fill"></i></div>
+                        <div>
+                            <div class="text-muted small fw-bold text-uppercase">Pending Review</div>
+                            <div class="fs-4 fw-bold text-slate-900">{{ requests.length }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════ NEW REQUEST PANEL ══════════════════════════════════ -->
+            <div *ngIf="showForm" class="entry-card mb-5 animate__animated animate__fadeInDown">
+                <div class="entry-card-header d-flex align-items-center gap-2">
+                    <i class="bi bi-clipboard-pulse fs-5"></i>
+                    <h6 class="mb-0 fw-bold">Operational Request Architect</h6>
+                </div>
+                <div class="entry-card-body">
+                    <div class="row g-4">
+                        <!-- Identifiers -->
+                        <div class="col-md-3">
+                            <div class="form-floating position-relative">
+                                <input type="text" class="form-control" [(ngModel)]="newLeave.empCode" (input)="fetchUser()" placeholder="Employee ID">
+                                <label><i class="bi bi-person-badge me-2"></i>Employee ID</label>
+                                
+                                <!-- Status Icons -->
+                                <div class="position-absolute end-0 top-50 translate-middle-y pe-3" style="z-index: 5;" *ngIf="lookupStatus !== 'idle'">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status" *ngIf="lookupStatus === 'searching'"></div>
+                                    <i class="bi bi-check-circle-fill text-success" *ngIf="lookupStatus === 'found'"></i>
+                                    <i class="bi bi-exclamation-circle-fill text-danger" *ngIf="lookupStatus === 'error'"></i>
+                                </div>
+                            </div>
+                            <!-- Status Text -->
+                            <div class="small mt-1 ps-2 fw-semibold animate__animated animate__fadeIn" [ngClass]="{
+                                'text-primary': lookupStatus === 'searching',
+                                'text-success': lookupStatus === 'found',
+                                'text-danger': lookupStatus === 'error'
+                            }" *ngIf="lookupStatus !== 'idle'">
+                                <span *ngIf="lookupStatus === 'searching'"><i class="bi bi-search me-1"></i>Verifying ID...</span>
+                                <span *ngIf="lookupStatus === 'found'"><i class="bi bi-person-check-fill me-1"></i>Identity Confirmed</span>
+                                <span *ngIf="lookupStatus === 'error'"><i class="bi bi-person-x-fill me-1"></i>ID not recognized</span>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-floating">
+                                <input type="text" class="form-control bg-light" [(ngModel)]="newLeave.name" readonly placeholder="Name">
+                                <label>Full Name</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <input type="text" class="form-control bg-light" [(ngModel)]="newLeave.department" readonly placeholder="Department">
+                                <label>Department</label>
+                            </div>
+                        </div>
+
+                        <!-- Configuration -->
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <select class="form-select" [(ngModel)]="newLeave.type">
+                                    <option value="" disabled>Select Category</option>
+                                    <option *ngFor="let type of leaveTypes" [value]="type.name">{{ type.name }}</option>
+                                </select>
+                                <label>Leave Category</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <input type="date" class="form-control" [(ngModel)]="newLeave.date">
+                                <label>Effective Date</label>
+                            </div>
+                        </div>
+
+                        <!-- Timings Row -->
+                        <div class="col-md-12">
+                            <div class="row g-3 p-3 bg-slate-50 rounded-4 border border-dashed">
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-muted mb-1 text-uppercase">Official Arrival</label>
+                                    <input type="time" class="form-control" [(ngModel)]="newLeave.officialIn">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-muted mb-1 text-uppercase">Official Departure</label>
+                                    <input type="time" class="form-control" [(ngModel)]="newLeave.officialOut">
+                                </div>
+                                <div class="col-md-3" *ngIf="newLeave.type !== 'Early'">
+                                    <label class="small fw-bold text-primary mb-1 text-uppercase">Actual Arrival</label>
+                                    <input type="time" class="form-control border-primary-subtle" [(ngModel)]="newLeave.timeIn">
+                                </div>
+                                <div class="col-md-3" *ngIf="newLeave.type !== 'Late'">
+                                    <label class="small fw-bold text-primary mb-1 text-uppercase">Actual Departure</label>
+                                    <input type="time" class="form-control border-primary-subtle" [(ngModel)]="newLeave.timeOut">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Justification -->
+                        <div class="col-md-12">
+                            <div class="form-floating">
+                                <textarea class="form-control" style="height: 100px" [(ngModel)]="newLeave.reason" placeholder="Reason"></textarea>
+                                <label>Administrative Justification / Reason</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 text-end pt-3">
+                            <button class="btn btn-link text-slate-500 fw-bold text-decoration-none px-4" (click)="toggleForm()">Cancel</button>
+                            <button class="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm" (click)="addLeave()">
+                                <i class="bi bi-shield-check me-2"></i> Commit Record
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════ DATA REPOSITORY ══════════════════════════════════ -->
+            <div class="table-container border-0 mb-5">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Faculty Member</th>
+                                <th>Department</th>
+                                <th>Category</th>
+                                <th class="text-center">Date</th>
+                                <th>Official Cycle</th>
+                                <th>Reported Cycle</th>
+                                <th>Duration</th>
+                                <th>Reason</th>
+                                <th class="text-end pe-4">Management</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let r of requests">
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="faculty-avatar">{{ r.name | slice:0:1 }}</div>
+                                        <div>
+                                            <div class="fw-bold text-slate-900">{{ r.name }}</div>
+                                            <div class="small text-primary fw-semibold">{{ r.empCode }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="fw-medium text-slate-600">{{ r.department }}</span></td>
+                                <td>
+                                    <span class="cat-pill" [ngClass]="{
+                                        'cat-late': r.type === 'Late',
+                                        'cat-early': r.type === 'Early',
+                                        'cat-inbetween': r.type === 'Inbetween'
+                                    }">{{ r.type }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="fw-bold text-slate-700">{{ r.date | date:'dd MMM yyyy' }}</div>
+                                    <div class="small text-muted">{{ r.date | date:'EEEE' }}</div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <input type="time" class="inline-time-input" [(ngModel)]="r.officialIn">
+                                        <span class="text-slate-300">→</span>
+                                        <input type="time" class="inline-time-input" [(ngModel)]="r.officialOut">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold">
+                                        <span class="text-slate-500">{{ r.timeIn || '—' }}</span>
+                                        <span class="mx-1 text-slate-300">/</span>
+                                        <span class="text-slate-500">{{ r.timeOut || '—' }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-slate-900">{{ calculateMinutes(r) }} <span class="small fw-normal text-muted">min</span></div>
+                                    <div class="small text-muted">{{ getHours(calculateMinutes(r)) }}</div>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 150px;" [title]="r.reason">
+                                        {{ r.reason || '—' }}
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="action-btn btn-approve" (click)="approve(r)" title="Authorize">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                        <button class="action-btn btn-reject" (click)="reject(r._id)" title="Decline">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                        <button class="action-btn btn-delete" (click)="delete(r._id)" title="Remove Record">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Empty State -->
+                            <tr *ngIf="requests.length === 0">
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="py-5">
+                                        <i class="bi bi-shield-slash text-slate-200" style="font-size: 5rem;"></i>
+                                        <h4 class="mt-3 fw-white text-slate-400">No Pending Authorizations</h4>
+                                        <p class="text-muted">New faculty requests will appear here for validation.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</app-staff-sidebar>

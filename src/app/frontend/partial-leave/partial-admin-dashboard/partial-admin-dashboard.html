@@ -1,0 +1,175 @@
+<app-staff-sidebar>
+    <div class="dashboard-container p-0">
+
+        <!-- ── HEADER ── -->
+        <div class="container-fluid px-4 pt-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="dash-title mb-1">Administrative Intelligence</h2>
+                    <p class="dash-sub mb-0">Unified command center for Departmental Partial Leave operations</p>
+                </div>
+                <div class="col-md-4 text-md-end pt-3 pt-md-0">
+                    <button
+                        class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold animate__animated animate__fadeInRight"
+                        routerLink="/admin-requests">
+                        <i class="bi bi-shield-check me-2"></i> Review Pending
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid px-4">
+
+            <!-- ── STAT CARDS ── -->
+            <div class="row g-4 mb-5">
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-primary"><i class="bi bi-file-earmark-text"></i></div>
+                        <div>
+                            <div class="stat-label">Total Requests</div>
+                            <div class="stat-value">{{ stats.total }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-info"><i class="bi bi-clock-history"></i></div>
+                        <div>
+                            <div class="stat-label">Pending Review</div>
+                            <div class="stat-value text-info">{{ stats.pending }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-success"><i class="bi bi-patch-check"></i></div>
+                        <div>
+                            <div class="stat-label">Total Approved</div>
+                            <div class="stat-value text-success">{{ stats.approved }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-warning"><i class="bi bi-calendar2-day"></i></div>
+                        <div>
+                            <div class="stat-label">Today's Activity</div>
+                            <div class="small fw-bold">
+                                <span class="text-primary">{{ todayLate }} Late</span> |
+                                <span class="text-info">{{ todayEarly }} Early</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <!-- ── ANALYTICS CHART ── -->
+                <div class="col-lg-5">
+                    <div class="panel-card h-100">
+                        <div class="panel-header border-0 bg-transparent pb-0">
+                            <h6 class="mb-0 fw-bold text-slate-800">Operational Distribution</h6>
+                            <p class="small text-muted mb-0">Breakdown of leave types in repository</p>
+                        </div>
+                        <div class="panel-body d-flex align-items-center justify-content-center"
+                            style="min-height: 250px;">
+                            <canvas id="leaveTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── RECENT ACTIVITY ── -->
+                <div class="col-lg-7">
+                    <div class="panel-card h-100">
+                        <div class="panel-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold text-slate-800">Live Operations Feed</h6>
+                            <button class="btn btn-link btn-sm text-decoration-none fw-bold"
+                                routerLink="/partial-report">View All</button>
+                        </div>
+                        <div class="panel-body p-0">
+                            <div class="table-responsive">
+                                <table class="table align-middle table-hover mb-0">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th class="ps-4">Faculty</th>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th class="pe-4 text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let req of recentRequests" class="cursor-pointer"
+                                            routerLink="/admin-requests">
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="avatar-sx">{{ req.name | slice:0:1 }}</div>
+                                                    <div>
+                                                        <div class="fw-bold small text-slate-900">{{ req.name }}</div>
+                                                        <div class="x-small text-muted">{{ req.empCode }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="type-pill" [ngClass]="{
+                                                    'tp-late': req.type === 'Late',
+                                                    'tp-early': req.type === 'Early',
+                                                    'tp-inbetween': req.type === 'Inbetween'
+                                                }">{{ req.type }}</span>
+                                            </td>
+                                            <td><span class="small fw-semibold text-slate-600">{{ req.date | date:'dd
+                                                    MMM' }}</span></td>
+                                            <td class="pe-4 text-end">
+                                                <span class="status-pill" [ngClass]="{
+                                                    'sp-approved': req.status === 'Approved',
+                                                    'sp-pending': req.status === 'Pending',
+                                                    'sp-rejected': req.status === 'Rejected'
+                                                }">{{ req.status }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr *ngIf="recentRequests.length === 0">
+                                            <td colspan="4" class="text-center py-4 text-muted small">No recent
+                                                operations detected</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── QUICK ACTIONS ── -->
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="action-card" routerLink="/admin-requests">
+                        <div class="action-icon bg-indigo-soft text-indigo"><i class="bi bi-plus-circle"></i></div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Issue New Request</h6>
+                            <p class="x-small text-muted mb-0">Manually architect a leave record</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card" routerLink="/partial-report">
+                        <div class="action-icon bg-cyan-soft text-cyan"><i class="bi bi-file-earmark-bar-graph"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Intelligence Reports</h6>
+                            <p class="x-small text-muted mb-0">Audit and export operational data</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card" routerLink="/add-user">
+                        <div class="action-icon bg-slate-200 text-slate-700"><i class="bi bi-people"></i></div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Identity Management</h6>
+                            <p class="x-small text-muted mb-0">Govern faculty access and roles</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</app-staff-sidebar>

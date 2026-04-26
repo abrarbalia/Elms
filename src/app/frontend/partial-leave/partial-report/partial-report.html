@@ -1,0 +1,516 @@
+<app-staff-sidebar>
+    <div class="leave-admin-bg p-0">
+        <!-- ══════════════════════════════════ HEADER SECTION ══════════════════════════════════ -->
+        <div class="container-fluid px-4 pt-4 mb-4">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-7">
+                    <h2 class="admin-title mb-1">Leave Operations Control</h2>
+                    <p class="admin-sub mb-0">Monitor, evaluate, and manage departmental partial leave requests</p>
+                </div>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="d-inline-flex gap-2">
+                        <button class="btn btn-export" (click)="exportCSV()">
+                            <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i> Export CSV
+                        </button>
+                        <button class="btn btn-export border-danger-subtle text-danger"
+                            (click)="downloadAllLeavesPDF()">
+                            <i class="bi bi-file-earmark-pdf-fill me-2"></i> System PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div *ngIf="toastMessage" class="container-fluid px-4" style="position:sticky;top:0;z-index:1050;">
+            <div class="alert mb-0 py-2 px-4 d-flex align-items-center gap-2 border-0 rounded-3 shadow"
+                [ngClass]="toastType === 'success' ? 'alert-success' : 'alert-danger'"
+                style="animation: slideIn 0.3s ease;">
+                <i class="bi"
+                    [ngClass]="toastType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'"></i>
+                <span class="fw-semibold">{{ toastMessage }}</span>
+            </div>
+        </div>
+
+
+        <div class="container-fluid px-4">
+            <!-- ══════════════════════════════════ SUMMARY CARDS ══════════════════════════════════ -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon"><i class="bi bi-stack"></i></div>
+                        <div class="stat-value">{{ leaves.length }}</div>
+                        <div class="stat-label">Total Volume</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card stat-pending">
+                        <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                        <div class="stat-value">{{ countByStatus('Pending') }}</div>
+                        <div class="stat-label">Await Review</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card stat-approved">
+                        <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
+                        <div class="stat-value">{{ countByStatus('Approved') }}</div>
+                        <div class="stat-label">Granted</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card stat-rejected">
+                        <div class="stat-icon"><i class="bi bi-shield-x"></i></div>
+                        <div class="stat-value">{{ countByStatus('Rejected') }}</div>
+                        <div class="stat-label">Declined</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════ FILTER & SEARCH ══════════════════════════════════ -->
+            <div class="filter-bar card mb-4 p-4 border-0">
+                <div class="row g-3 align-items-end">
+                    <!-- Search -->
+                    <div class="col-xl-3 col-lg-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Search Directory</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0"><i
+                                    class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0"
+                                placeholder="Name or Employee Code..." [(ngModel)]="searchTerm"
+                                (ngModelChange)="onFilterChange()">
+                        </div>
+                    </div>
+
+                    <!-- Type -->
+                    <div class="col-xl-2 col-lg-4 col-md-6">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Leave Type</label>
+                        <select class="form-select" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
+                            <option value="">All Categories</option>
+                            <option *ngFor="let lt of leaveTypes" [value]="lt">{{ lt }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Department -->
+                    <div class="col-xl-2 col-lg-4 col-md-6">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Department</label>
+                        <select class="form-select" [(ngModel)]="filterDepartment" (ngModelChange)="onFilterChange()">
+                            <option value="">All Regions</option>
+                            <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="col-xl-3 col-lg-8">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Observation
+                            Period</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" [(ngModel)]="filterDateFrom"
+                                (ngModelChange)="onFilterChange()">
+                            <span class="input-group-text bg-light">to</span><br>
+                            <input type="date" class="form-control" [(ngModel)]="filterDateTo"
+                                (ngModelChange)="onFilterChange()">
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-xl-2 col-lg-4 text-end">
+                        <button class="btn btn-primary w-100 fw-bold shadow-sm" (click)="downloadDepartmentReport()"
+                            [disabled]="!filterDepartment">
+                            <i class="bi bi-file-earmark-text me-2"></i> Dept Report
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3 pt-3 border-top" *ngIf="selectedIds.size > 0">
+                    <span class="small fw-bold text-primary align-self-center me-auto">
+                        <i class="bi bi-check-all fs-5"></i> {{ selectedIds.size }} items selected
+                    </span>
+                    <button class="btn btn-sm btn-outline-danger px-3 rounded-pill" (click)="bulkReject()">
+                        <i class="bi bi-trash3 me-1"></i> Bulk Decline
+                    </button>
+                    <button class="btn btn-sm btn-dark px-4 rounded-pill" (click)="downloadSelectedPDF()">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Selection PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════ DATA TABLE ══════════════════════════════════ -->
+            <div class="card table-card border-0 mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0 leave-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:50px;">
+                                        <input type="checkbox" class="form-check-input" [checked]="isAllSelected()"
+                                            (change)="toggleSelectAll($event)">
+                                    </th>
+                                    <th>srNo</th>
+                                    <th class="cursor-pointer" (click)="sort('name')">
+                                        Employee <i class="bi ms-1" [ngClass]="sortIcon('name')"></i>
+                                    </th>
+                                    <th>Department</th>
+                                    <th class="cursor-pointer" (click)="sort('date')">
+                                        Date <i class="bi ms-1" [ngClass]="sortIcon('date')"></i>
+                                    </th>
+                                    <th>Duration</th>
+                                    <th>Category</th>
+                                    <th class="cursor-pointer" (click)="sort('status')">
+                                        Status <i class="bi ms-1" [ngClass]="sortIcon('status')"></i>
+                                    </th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let leave of pagedLeaves" class="leave-row"
+                                    [class.table-light]="selectedIds.has(leave._id)">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input"
+                                            [checked]="selectedIds.has(leave._id)" (change)="toggleSelect(leave._id)">
+                                    </td>
+                                    <td><span class="small text-muted fw-bold">#{{ leave.srNo }}</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="emp-avatar">{{ leave.name | slice:0:1 }}</div>
+                                            <div>
+                                                <div class="fw-bold text-slate-900">{{ leave.name }}</div>
+                                                <div class="small text-primary fw-semibold">{{ leave.empCode }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="text-slate-700 fw-medium">{{ leave.department }}</span></td>
+                                    <td>
+                                        <div class="fw-semibold text-slate-700">{{ leave.date | date:'mediumDate' }}
+                                        </div>
+                                        <div class="small text-muted">{{ leave.date | date:'EEEE' }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ leave.totalMinutes }}<span
+                                                class="small fw-normal ms-1">min</span></div>
+                                        <div class="small text-muted">{{ getHours(leave.totalMinutes) }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="type-badge" [ngClass]="{
+                                            'type-late': leave.type === 'Late',
+                                            'type-early': leave.type === 'Early',
+                                            'type-inbetween': leave.type === 'Inbetween'
+                                        }">{{ leave.type }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" [ngClass]="{
+                                            'status-approved': leave.status === 'Approved',
+                                            'status-pending': leave.status === 'Pending',
+                                            'status-rejected': leave.status === 'Rejected'
+                                        }">
+                                            <span class="status-dot"></span> {{ leave.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1"
+                                                (click)="openEdit(leave)" title="Edit" [id]="'edit-btn-' + leave._id">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
+                                                (click)="openDeleteConfirm(leave)" title="Move to Recycle Bin"
+                                                [id]="'delete-btn-' + leave._id">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr *ngIf="filteredLeaves.length === 0">
+                                    <td colspan="9" class="text-center py-5">
+                                        <div class="py-4">
+                                            <i class="bi bi-inbox-fill text-slate-200" style="font-size: 4rem;"></i>
+                                            <h5 class="mt-3 fw-bold text-slate-500">No matching records found</h5>
+                                            <p class="text-muted">Try adjusting your filters or search criteria.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════ PAGINATION ══════════════════════════════════ -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-5"
+                *ngIf="filteredLeaves.length > 0">
+                <div class="text-slate-500 fw-medium">
+                    Revealing <span class="text-slate-900 fw-bold">{{ pageStart }}–{{ pageEnd }}</span> of
+                    <span class="text-slate-900 fw-bold">{{ filteredLeaves.length }}</span> operations
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize"
+                        (ngModelChange)="onPageSizeChange()">
+                        <option [value]="5">5 per view</option>
+                        <option [value]="10">10 per view</option>
+                        <option [value]="25">25 per view</option>
+                        <option [value]="50">50 per view</option>
+                    </select>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" [class.disabled]="currentPage === 1">
+                                <a class="page-link shadow-none" (click)="goToPage(currentPage - 1)"><i
+                                        class="bi bi-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item" *ngFor="let p of pageNumbers" [class.active]="p === currentPage">
+                                <a class="page-link shadow-none" (click)="goToPage(p)">{{ p }}</a>
+                            </li>
+                            <li class="page-item" [class.disabled]="currentPage === totalPages">
+                                <a class="page-link shadow-none" (click)="goToPage(currentPage + 1)"><i
+                                        class="bi bi-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════ EMPLOYEE SEARCH SUMMARY ══════════════════════════════════ -->
+            <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" *ngIf="searchedEmployee">
+                <div class="bg-primary p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3 text-white">
+                        <div class="emp-avatar bg-white text-primary fw-bold" style="width: 40px; height: 40px;">{{
+                            searchedEmployee.name | slice:0:1 }}</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Operational Summary for {{ searchedEmployee.name }}</h5>
+                            <small class="opacity-75">Ref: {{ searchedEmployee.empCode }} | {{
+                                searchedEmployee.department }}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm rounded-pill fw-bold px-3 shadow-sm"
+                            (click)="downloadFullUserReport(searchedEmployee.empCode, searchedEmployee.name)">
+                            <i class="bi bi-file-earmark-pdf-fill me-1 text-danger"></i> Full Ledger
+                        </button>
+                        <button class="btn-close btn-close-white" (click)="clearEmpSearch()"></button>
+                    </div>
+                </div>
+                <div class="row g-0">
+                    <div class="col-md-4 border-end">
+                        <div class="p-4 text-center">
+                            <div class="text-uppercase small fw-bold text-muted mb-2">Total Requests</div>
+                            <div class="display-6 fw-bold text-slate-800">{{ searchedEmployee.totalRequests }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 border-end">
+                        <div class="p-4 text-center">
+                            <div class="text-uppercase small fw-bold text-muted mb-2">Approved Duration</div>
+                            <div class="display-6 fw-bold text-primary">{{ searchedEmployee.totalMinutes }}<span
+                                    class="fs-4">m</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-4 text-center">
+                            <div class="text-uppercase small fw-bold text-muted mb-2">Net Exclusion Time</div>
+                            <div class="display-6 fw-bold text-success">{{ searchedEmployee.notWorkedTime }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /container -->
+
+        <!-- ══════════════════════════════════ MODALS ══════════════════════════════════ -->
+        <!-- Details Modal -->
+        <div class="modal fade" id="leaveDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content detail-modal overflow-hidden" *ngIf="selectedLeave">
+                    <div class="modal-header border-0 bg-primary bg-opacity-10 p-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="emp-avatar emp-avatar-lg shadow-sm">{{ selectedLeave.name | slice:0:1 }}</div>
+                            <div>
+                                <h4 class="mb-0 fw-bold text-slate-900">{{ selectedLeave.name }}</h4>
+                                <span class="badge bg-primary px-3 rounded-pill">ID: {{ selectedLeave.empCode }}</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="detail-grid mb-4">
+                            <div class="detail-item">
+                                <span class="detail-label">Observation Date</span>
+                                <span class="detail-value text-slate-800">{{ selectedLeave.date | date:'longDate'
+                                    }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Leave Category</span>
+                                <span class="detail-value">
+                                    <span class="type-badge" [ngClass]="{
+                                        'type-late': selectedLeave.type === 'Late',
+                                        'type-early': selectedLeave.type === 'Early',
+                                        'type-inbetween': selectedLeave.type === 'Inbetween'
+                                    }">{{ selectedLeave.type }}</span>
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Computed Duration</span>
+                                <span class="detail-value text-slate-800">{{ selectedLeave.totalMinutes }} min ({{
+                                    getHours(selectedLeave.totalMinutes) }})</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Security Review Status</span>
+                                <span class="detail-value">
+                                    <span class="status-badge" [ngClass]="{
+                                        'status-approved': selectedLeave.status === 'Approved',
+                                        'status-pending': selectedLeave.status === 'Pending',
+                                        'status-rejected': selectedLeave.status === 'Rejected'
+                                    }">
+                                        <span class="status-dot"></span>{{ selectedLeave.status }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="rounded-3 bg-slate-50 p-3 mb-4">
+                            <div class="detail-label">Context / Reason</div>
+                            <div class="text-slate-700 italic fw-medium">"{{ selectedLeave.reason || 'No specific
+                                justification provided.' }}"</div>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">Annual Exclusion Total (Approved)</span>
+                            <div class="progress mt-1" style="height: 8px;">
+                                <div class="progress-bar bg-success" [style.width]="'100%'"></div>
+                            </div>
+                            <span class="detail-value mt-2 text-success fw-bold">{{
+                                getNotWorkedTime(selectedLeave.empCode) }}</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0 gap-2">
+                        <button class="btn btn-success flex-fill fw-bold py-2"
+                            (click)="approve(selectedLeave); closeModal()">
+                            <i class="bi bi-patch-check me-2"></i> Approve Request
+                        </button>
+                        <button class="btn btn-danger flex-fill fw-bold py-2"
+                            (click)="reject(selectedLeave._id); closeModal()">
+                            <i class="bi bi-trash3 me-2"></i> Decline
+                        </button>
+                        <button class="btn btn-dark fw-bold py-2"
+                            (click)="downloadFullUserReport(selectedLeave.empCode, selectedLeave.name)">
+                            <i class="bi bi-file-earmark-pdf me-2"></i> Full Ledger
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ EDIT MODAL ══ -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 rounded-4 shadow-lg">
+                    <div class="modal-header bg-primary bg-opacity-10 border-0">
+                        <h5 class="modal-title fw-bold text-primary">
+                            <i class="bi bi-pencil-fill me-2"></i>Edit Leave Record
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" id="edit-modal-close"></button>
+                    </div>
+                    <div class="modal-body p-4" *ngIf="editLeave">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Employee</label>
+                                <p class="fw-bold mb-0">{{ editLeave.name }} <span class="text-muted">(#{{
+                                        editLeave.empCode }})</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-date">Date</label>
+                                <input type="date" id="edit-date" class="form-control" [(ngModel)]="editLeave.date">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase" for="edit-type">Leave
+                                    Type</label>
+                                <select class="form-select" id="edit-type" [(ngModel)]="editLeave.type">
+                                    <option value="Late">Late</option>
+                                    <option value="Early">Early</option>
+                                    <option value="Inbetween">Inbetween</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-time-in">Time In</label>
+                                <input type="time" id="edit-time-in" class="form-control"
+                                    [(ngModel)]="editLeave.timeIn">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-time-out">Time Out</label>
+                                <input type="time" id="edit-time-out" class="form-control"
+                                    [(ngModel)]="editLeave.timeOut">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-official-in">Official In</label>
+                                <input type="time" id="edit-official-in" class="form-control"
+                                    [(ngModel)]="editLeave.officialIn">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-official-out">Official Out</label>
+                                <input type="time" id="edit-official-out" class="form-control"
+                                    [(ngModel)]="editLeave.officialOut">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-status">Status</label>
+                                <select class="form-select" id="edit-status" [(ngModel)]="editLeave.status">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Current
+                                    Duration</label>
+                                <p class="fw-bold mb-0 text-primary">{{ editLeave.totalMinutes }} min ({{
+                                    getHours(editLeave.totalMinutes) }})</p>
+                                <small class="text-muted">Duration auto-recalculates on save</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted text-uppercase"
+                                    for="edit-reason">Reason</label>
+                                <textarea id="edit-reason" class="form-control" rows="2"
+                                    [(ngModel)]="editLeave.reason"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0 gap-2">
+                        <button class="btn btn-light fw-bold flex-fill" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-primary fw-bold flex-fill" (click)="saveEdit()" id="btn-save-edit">
+                            <i class="bi bi-check2 me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ DELETE CONFIRM MODAL ══ -->
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content border-0 rounded-4 shadow-lg">
+                    <div class="modal-body p-4 text-center">
+                        <div class="mb-3" style="font-size: 2.8rem;">🗑️</div>
+                        <h5 class="fw-bold text-dark">Move to Recycle Bin?</h5>
+                        <p class="text-muted small mb-0" *ngIf="deleteTarget">
+                            <strong>{{ deleteTarget.name }}</strong>'s leave on
+                            <strong>{{ deleteTarget.date | date:'mediumDate' }}</strong>
+                            will be soft-deleted.
+                        </p>
+                        <p class="text-muted small">It can be restored within 90 days.</p>
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-light flex-fill fw-bold" data-bs-dismiss="modal"
+                                id="btn-delete-cancel">Cancel</button>
+                            <button class="btn btn-danger flex-fill fw-bold" (click)="confirmDelete()"
+                                id="btn-delete-confirm">
+                                <i class="bi bi-trash3-fill me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</app-staff-sidebar>

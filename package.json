@@ -1,0 +1,119 @@
+{
+  "name": "elms",
+  "version": "0.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "electron": "electron .",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "build:exe": "electron-builder",
+    "clean": "powershell -Command \"Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0\"",
+    "all": "npm run clean && concurrently \"npm start\" \"npm run electron\""
+  },
+  "build": {
+    "appId": "com.elms.app",
+    "productName": "ELMS-Desktop",
+    "files": [
+      "electron/**/*",
+      "backend/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend"
+      },
+      {
+        "from": "dist/elms",
+        "to": "dist/elms"
+      }
+    ],
+    "portable": {
+      "artifactName": "ELMS-Desktop-Portable.exe"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "asarUnpack": [
+      "**/node_modules/**"
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "dexie": "^4.4.2",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.3.1",
+    "multer": "^2.1.1",
+    "node-cron": "^4.2.1"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.0.3",
+    "@angular/cli": "^21.0.3",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/compiler-cli": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/router": "^21.0.0",
+    "@types/bootstrap": "^5.2.10",
+    "@types/express": "^5.0.1",
+    "@types/node": "^20.17.19",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "chart.js": "^4.5.1",
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1",
+    "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.14.0",
+    "jsdom": "^27.1.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
+  },
+  "description": "This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.3.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abrarbalia/Elms.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abrarbalia/Elms/issues"
+  },
+  "homepage": "https://github.com/abrarbalia/Elms#readme"
+}
